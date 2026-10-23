@@ -1,38 +1,32 @@
 // Vercel Serverless Function: POST /api/ai  (modes: translate | summarize | characters)
-// Uses the Google Gemini API. Set GEMINI_API_KEY in Vercel -> Settings -> Environment Variables.
+// Uses the OpenAI API. Set OPENAI_API_KEY in Vercel -> Settings -> Environment Variables.
 const MAX = 30000;
 const clip = (v, d) => String(v || d).slice(0, 40);
 
 async function ask(prompt, json = false) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 8192,
-          ...(json ? { responseMimeType: "application/json" } : {}),
-        },
-      }),
-    }
-  );
+  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: 8192,
+      ...(json ? { response_format: { type: "json_object" } } : {}),
+    }),
+  });
   const d = await r.json();
-  if (!r.ok) throw Object.assign(new Error(d?.error?.message || "Gemini API error"), { status: r.status });
-  const parts = d?.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error(d?.promptFeedback?.blockReason ? "Blocked: " + d.promptFeedback.blockReason : "Empty response from Gemini");
-  return parts.map((p) => p.text || "").join("");
+  if (!r.ok) throw Object.assign(new Error(d?.error?.message || "OpenAI API error"), { status: r.status });
+  const out = d?.choices?.[0]?.message?.content;
+  if (!out) throw new Error("Empty response from OpenAI");
+  return out;
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "Missing GEMINI_API_KEY on the server" });
+  if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: "Missing OPENAI_API_KEY on the server" });
   try {
     const b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
 
@@ -40,11 +34,11 @@ export default async function handler(req, res) {
       const items = Array.isArray(b.items) ? b.items.map(String).slice(0, 40) : [];
       if (!items.length || items.join("").length > MAX) return res.status(400).json({ error: "Bad or too long input" });
       const out = await ask(
-        `You are a skilled literary translator. Translate each item of this JSON array into ${clip(b.lang, "English")}. Keep tone, names and emotion; read naturally. Return ONLY a JSON array of exactly ${items.length} strings in the same order, no markdown, no commentary.\n\n${JSON.stringify(items)}`,
+        `You are a skilled literary translator. Translate each item of this JSON array into ${clip(b.lang, "English")}. Keep tone, names and emotion; read naturally. Return ONLY a JSON object of the form {"translations": [...]} where the array has exactly ${items.length} strings in the same order. No markdown, no commentary.\n\n${JSON.stringify(items)}`,
         true
       );
-      const m = out.match(/\[[\s\S]*\]/);
-      const arr = m ? JSON.parse(m[0]) : null;
+      let arr = null;
+      try { arr = JSON.parse(out).translations; } catch (e) {}
       if (!Array.isArray(arr) || arr.length !== items.length) return res.status(502).json({ error: "Bad model output, try again" });
       return res.status(200).json({ items: arr.map(String) });
     }
