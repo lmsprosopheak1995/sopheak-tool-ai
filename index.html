@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoryAI · បកប្រែ និងសង្ខេបរឿង</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#150f38;--bg2:#2a1a66;--panel:#231a58;--panel2:#1b1448;--line:#3d3190;--text:#ece8ff;--mut:#9d93d6;--hl:#a99bff;--acc:linear-gradient(135deg,#5a3df0,#7d4dff);--green:#5be38f}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--text);font:14px/1.6 "Noto Sans Khmer",system-ui,sans-serif}
+.app{max-width:1400px;margin:0 auto;padding:14px;display:grid;gap:12px;grid-template-columns:340px 1fr;grid-template-rows:auto minmax(380px,1fr) auto}
+header{grid-column:1/-1;display:flex;align-items:center;gap:12px}
+header h1{margin:0;font-size:1.4rem;line-height:1.2}
+header h1 b{color:var(--hl)}
+.pro{font-size:.65rem;background:#5a3df0;border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:middle}
+header p{margin:0;color:var(--mut);font-size:.8rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.pt{color:var(--hl);font-weight:700;margin:0 0 8px}
+textarea{width:100%;height:calc(100% - 78px);min-height:240px;resize:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit}
+.left{display:flex;flex-direction:column}
+.left textarea{flex:1}
+.meta{display:flex;justify-content:space-between;color:var(--mut);font-size:.8rem;margin:6px 0}
+button,select{font:inherit;color:var(--text);background:#2f2475;border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer}
+button:hover{background:#3b2f94}
+button.p{background:var(--acc);border-color:#7d4dff;font-weight:700}
+button:disabled{opacity:.55;cursor:wait}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.right{display:flex;flex-direction:column}
+.tw{flex:1;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel2);max-height:60vh}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--panel2);color:var(--hl);text-align:left;font-size:.75rem;letter-spacing:.05em;padding:8px;border-bottom:1px solid var(--line);z-index:1}
+td{padding:6px 8px;border-bottom:1px solid #2c2370;vertical-align:top}
+tr.sel td{background:linear-gradient(90deg,#4a2ed0,#7a4bff)}
+td.n{color:var(--mut);width:42px}td.c{width:34px}td.s{width:100px;text-align:right;color:var(--mut)}
+td.s.Ready{color:var(--green)}td.s.Error{color:#ff8a8a}td.s.Working{color:#ffd36b}
+td.t{outline:none;min-width:200px}
+td.t:focus{background:#00000040}
+.hint{color:var(--mut);font-size:.8rem;margin:8px 0 0}
+.ctl{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ctl .pt{margin:0;margin-right:6px}
+.vsep{margin-left:6px}.vc{white-space:nowrap}.vc select{padding:3px 6px}.vc button{padding:3px 9px}.prog{flex:1;min-width:160px;height:10px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+#msg{color:var(--mut);font-size:.85rem}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;max-width:640px;width:92%}
+dialog::backdrop{background:#000a}
+pre{white-space:pre-wrap;font:inherit;margin:8px 0 12px;max-height:50vh;overflow:auto}
+dialog input{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin:4px 0 8px}.hi{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}.hi span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hi small{color:var(--mut)}#au{margin-left:auto;display:flex;gap:8px;align-items:center;color:var(--mut);font-size:.85rem}
+@media(max-width:900px){.app{grid-template-columns:1fr;grid-template-rows:auto}.left textarea{min-height:200px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#3b2d86"/><path d="M6 22h4M12 14v16M18 8v28M24 16v12M30 11v22M36 19v6" stroke="#a99bff" stroke-width="3" stroke-linecap="round"/></svg>
+<div><h1>Story<b>AI</b><span class="pro">PRO</span></h1><p>ស្ទូឌីយោបកប្រែ សង្ខេប និងអានរឿងដោយ AI</p></div>
+<div id="au"></div>
+</header>
+
+<section class="panel left">
+<h2 class="pt">បញ្ចូលរឿង</h2>
+<textarea id="src" maxlength="30000" placeholder="បិទភ្ជាប់រឿងនៅទីនេះ... មួយកថាខណ្ឌក្នុងមួយបន្ទាត់"></textarea>
+<div class="meta"><span id="cnt">0 តួអក្សរ</span><span id="pc">0 កថាខណ្ឌ</span></div>
+<div class="bar" style="margin:0"><button class="p" id="load">ផ្ទុករឿង</button><button id="file">បើកឯកសារ .txt</button><input type="file" id="fi" accept=".txt,text/plain" hidden></div>
+</section>
+
+<section class="panel right">
+<h2 class="pt">ទិន្នន័យរឿង</h2>
+<div class="bar">
+<button id="add">+ បន្ថែមអត្ថបទ</button><button id="edit">កែ</button><button id="del">លុប</button><button id="fr">ស្វែងរក និងជំនួស</button>
+<span style="flex:1"></span>
+<button class="p" id="chars">ស្កេនតួអង្គ</button><button class="p" id="recap">សង្ខេបរឿង</button>
+</div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="all" checked></th><th>#</th><th>អត្ថបទដើម</th><th>ការបកប្រែ (កែបាន)</th><th>សំឡេង</th><th style="text-align:right">ស្ថានភាព</th></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="hint">ធីកជួរដើម្បីបកប្រែ។ ចុចលើក្រឡា «ការបកប្រែ» ដើម្បីកែផ្ទាល់។ ចុច ▶ ដើម្បីស្តាប់ជួរនោះ។</p>
+</section>
+
+<section class="panel ctl">
+<h2 class="pt">កម្មវិធីបកប្រែ</h2>
+<select id="lang"><option value="Khmer">ខ្មែរ</option><option value="English">អង់គ្លេស</option><option value="Chinese">ចិន</option><option value="Thai">ថៃ</option><option value="Vietnamese">វៀតណាម</option><option value="Japanese">ជប៉ុន</option><option value="Korean">កូរ៉េ</option><option value="French">បារាំង</option></select>
+<button class="p" id="tr">បកប្រែ</button>
+<select id="len"><option value="short">សង្ខេប៖ ខ្លី</option><option value="medium" selected>សង្ខេប៖ មធ្យម</option><option value="points">សង្ខេប៖ ចំណុចសំខាន់</option></select>
+<span class="vsep">🔊</span><select id="gv"><option value="male">សំឡេងប្រុស</option><option value="female">សំឡេងស្រី</option></select><button id="pa">▶ អានទាំងអស់</button><button id="st">■ ឈប់</button><button id="sv">💾 រក្សាទុក</button><button id="hs">📚 ប្រវត្តិ</button><button id="exp">នាំចេញ .txt</button>
+<div class="prog"><i id="pg"></i></div><span id="pct">0%</span><span id="msg">រួចរាល់។</span>
+</section>
+</div>
+
+<dialog id="adlg"><h3 class="pt">ចូលគណនី</h3>
+<label for="em">អ៊ីមែល</label><input id="em" type="email" autocomplete="email">
+<label for="pw">ពាក្យសម្ងាត់ (យ៉ាងតិច ៦ តួ)</label><input id="pw" type="password" autocomplete="current-password">
+<div id="am" style="color:var(--mut);min-height:1.6em"></div>
+<div class="bar"><button class="p" id="ain">ចូល</button><button id="aup">ចុះឈ្មោះ</button><button id="ax">បិទ</button></div></dialog>
+<dialog id="hdlg"><h3 class="pt">ប្រវត្តិរឿងដែលបានរក្សាទុក</h3><div id="hl">...</div><div class="bar" style="margin-top:10px"><button id="hx">បិទ</button></div></dialog>
+<dialog id="dlg"><h3 class="pt" id="dt"></h3><pre id="db"></pre><div class="bar"><button id="dc">ចម្លង</button><button id="dx">បិទ</button></div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var rows=[],sel=-1,esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+
+var SM={Pending:"រង់ចាំ",Working:"កំពុងធ្វើ",Ready:"រួចរាល់",Error:"កំហុស"};
+var LC={Khmer:"km",English:"en",Chinese:"zh",Thai:"th",Vietnamese:"vi",Japanese:"ja",Korean:"ko",French:"fr"};
+var FEM=/female|sreymom|zira|aria|jenny|sara|hoaimy|premwadee|achara|xiaoxiao|nanami|sunhi|denise|hazel|susan|samantha/i;
+var MAL=/piseth|david|mark|guy|nampo|niwat|namminh|yunxi|keita|injoon|henri|daniel|alex|\bmale\b/i;
+var voices=[],playing=false;
+function loadVoices(){voices=window.speechSynthesis?speechSynthesis.getVoices():[]}
+if(window.speechSynthesis){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function pick(code,g){
+  var l=voices.filter(function(v){return v.lang.toLowerCase().replace("_","-").indexOf(code)===0});
+  if(!l.length)return null;
+  var m=l.filter(function(v){return g==="female"?FEM.test(v.name):(MAL.test(v.name)&&!FEM.test(v.name))});
+  return{v:m[0]||l[0],exact:!!m.length};
+}
+function speak(i,done){
+  if(!window.speechSynthesis){msg("ឧបករណ៍នេះមិនគាំទ្រការអានសំឡេងទេ។");done&&done();return}
+  var r=rows[i],txt=(r.t||r.o||"").trim();if(!txt){done&&done();return}
+  var code=r.t?LC[$("lang").value]:"km",p=pick(code,r.v),u=new SpeechSynthesisUtterance(txt);
+  u.lang=code;
+  if(p){u.voice=p.v;u.lang=p.v.lang;if(!p.exact){u.pitch=r.v==="male"?0.7:1.2}}
+  else msg("រកមិនឃើញសំឡេងភាសានេះលើឧបករណ៍ទេ (សាកល្បង Microsoft Edge ឬ Chrome)។");
+  u.onend=u.onerror=function(){done&&done()};
+  sel=i;[].forEach.call($("tb").children,function(x,k){x.classList.toggle("sel",k===i)});
+  speechSynthesis.speak(u);
+}
+function stopAll(){playing=false;if(window.speechSynthesis)speechSynthesis.cancel()}
+$("st").onclick=function(){stopAll();msg("បានឈប់។")};
+$("pa").onclick=function(){
+  var q=[];rows.forEach(function(r,i){if(r.c&&(r.t||r.o))q.push(i)});
+  if(!q.length){msg("គ្មានអ្វីត្រូវអានទេ។");return}
+  stopAll();playing=true;msg("កំពុងអាន...");
+  (function next(k){if(!playing||k>=q.length){playing=false;msg("អានចប់។");return}speak(q[k],function(){if(playing)next(k+1)})})(0);
+};
+$("gv").onchange=function(){rows.forEach(function(r){r.v=$("gv").value});render()};
+function msg(t){$("msg").textContent=t}
+function prog(p){p=Math.round(p);$("pg").style.width=p+"%";$("pct").textContent=p+"%"}
+function busy(b){["tr","recap","chars","load"].forEach(function(i){$(i).disabled=b})}
+function render(){
+  $("tb").innerHTML=rows.map(function(r,i){
+    return '<tr data-i="'+i+'" class="'+(i===sel?"sel":"")+'"><td class="c"><input type="checkbox" data-c="'+i+'"'+(r.c?" checked":"")+'></td><td class="n">'+(i+1)+'</td><td>'+esc(r.o)+'</td><td class="t" contenteditable="true" data-t="'+i+'">'+esc(r.t)+'</td><td class="vc"><select data-v="'+i+'"><option value="male"'+(r.v==='male'?' selected':'')+'>ប្រុស</option><option value="female"'+(r.v==='female'?' selected':'')+'>ស្រី</option></select> <button data-p="'+i+'">▶</button></td><td class="s '+r.s+'">'+SM[r.s]+'</td></tr>'}).join("");
+  $("pc").textContent=rows.length+" កថាខណ្ឌ";
+}
+$("src").addEventListener("input",function(){$("cnt").textContent=$("src").value.length.toLocaleString()+" តួអក្សរ"});
+$("load").onclick=function(){
+  rows=$("src").value.split(/\n+/).map(function(s){return s.trim()}).filter(Boolean).map(function(s){return{o:s,t:"",s:"Pending",c:true,v:$("gv").value}});
+  sel=-1;render();prog(0);msg(rows.length?"បានផ្ទុករឿង។":"គ្មានអ្វីត្រូវផ្ទុកទេ។");
+};
+$("file").onclick=function(){$("fi").click()};
+$("fi").onchange=function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){$("src").value=String(rd.result).slice(0,30000);$("src").dispatchEvent(new Event("input"));$("load").click()};rd.readAsText(f)};
+$("tb").addEventListener("click",function(e){
+  var c=e.target.getAttribute("data-c");
+  if(c!==null){rows[c].c=e.target.checked;return}
+  var pb=e.target.getAttribute("data-p");
+  if(pb!==null){stopAll();speak(+pb);return}
+  if(e.target.getAttribute("data-v")!==null)return;
+  var tr=e.target.closest("tr");if(!tr)return;
+  var i=+tr.getAttribute("data-i");if(sel!==i){sel=i;[].forEach.call($("tb").children,function(x,k){x.classList.toggle("sel",k===i)})}
+});
+$("tb").addEventListener("change",function(e){var v=e.target.getAttribute("data-v");if(v!==null)rows[v].v=e.target.value});
+$("tb").addEventListener("input",function(e){var t=e.target.getAttribute("data-t");if(t!==null)rows[t].t=e.target.textContent});
+$("all").onchange=function(){rows.forEach(function(r){r.c=$("all").checked});render()};
+$("add").onclick=function(){rows.splice(sel>=0?sel+1:rows.length,0,{o:"",t:"",s:"Pending",c:true,v:$("gv").value});render()};
+$("edit").onclick=function(){var el=sel>=0&&$("tb").querySelector('[data-t="'+sel+'"]');if(el)el.focus();else msg("សូមជ្រើសជួរមួយជាមុន។")};
+$("del").onclick=function(){var n=rows.length;rows=rows.filter(function(r){return!r.c});sel=-1;render();msg("បានលុប "+(n-rows.length)+" ជួរ។")};
+$("fr").onclick=function(){
+  var a=prompt("ស្វែងរក៖");if(!a)return;var b=prompt("ជំនួសដោយ៖");if(b===null)return;
+  var n=0;rows.forEach(function(r){var p=r.t.split(a);if(p.length>1){n+=p.length-1;r.t=p.join(b)}});render();msg("បានជំនួស "+n+" កន្លែង។");
+};
+async function api(body){
+  var r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  var d=await r.json();if(!r.ok)throw new Error(d.error||"Error");return d;
+}
+$("tr").onclick=async function(){
+  var idx=[];rows.forEach(function(r,i){if(r.c&&r.o.trim())idx.push(i)});
+  if(!idx.length){msg("សូមផ្ទុករឿង និងធីកជួរជាមុន។");return}
+  busy(true);prog(0);var done=0;
+  for(var k=0;k<idx.length;k+=10){
+    var ch=idx.slice(k,k+10);ch.forEach(function(i){rows[i].s="Working"});render();msg("កំពុងបកប្រែ...");
+    try{
+      var d=await api({mode:"translate",lang:$("lang").value,items:ch.map(function(i){return rows[i].o})});
+      ch.forEach(function(i,j){rows[i].t=d.items[j]||"";rows[i].s="Ready"});
+    }catch(e){ch.forEach(function(i){rows[i].s="Error"});msg(e.message)}
+    done+=ch.length;prog(done/idx.length*100);render();
+  }
+  busy(false);if($("msg").textContent==="កំពុងបកប្រែ...")msg("បកប្រែរួចរាល់។");
+};
+function allText(){return rows.map(function(r){return r.o}).join("\n")}
+function open(title,text){$("dt").textContent=title;$("db").textContent=text;$("dlg").showModal()}
+async function run(mode,title,extra){
+  var text=allText();if(!text.trim()){msg("សូមផ្ទុករឿងជាមុន។");return}
+  busy(true);msg("កំពុងដំណើរការ...");
+  try{var d=await api(Object.assign({mode:mode,text:text,lang:$("lang").value},extra||{}));msg("រួចរាល់។");open(title,d.text)}
+  catch(e){msg(e.message)}finally{busy(false)}
+}
+$("recap").onclick=function(){run("summarize","សង្ខេបរឿង",{len:$("len").value})};
+$("chars").onclick=function(){run("characters","តួអង្គ")};
+$("dx").onclick=function(){$("dlg").close()};
+$("dc").onclick=async function(){try{await navigator.clipboard.writeText($("db").textContent);$("dc").textContent="បានចម្លង ✓"}catch(e){}setTimeout(function(){$("dc").textContent="ចម្លង"},1500)};
+$("exp").onclick=function(){
+  var t=rows.map(function(r){return r.t||r.o}).join("\n\n");if(!t.trim()){msg("គ្មានអ្វីត្រូវនាំចេញទេ។");return}
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain;charset=utf-8"}));a.download="story-translation.txt";a.click();URL.revokeObjectURL(a.href);msg("នាំចេញរួចរាល់។");
+};
+
+/* ---------- Supabase: login + history ---------- */
+var sb=null,user=null,curId=null;
+try{if(window.supabase&&window.APP_CONFIG&&APP_CONFIG.SUPABASE_URL)sb=supabase.createClient(APP_CONFIG.SUPABASE_URL,APP_CONFIG.SUPABASE_ANON_KEY)}catch(e){}
+function authUI(){
+  if(!sb){$("au").textContent="";return}
+  $("au").innerHTML=user?'<span>'+esc(user.email)+'</span><button data-a="out">ចេញ</button>':'<button class="p" data-a="in">ចូលគណនី</button>';
+}
+$("au").addEventListener("click",async function(e){
+  var a=e.target.getAttribute("data-a");
+  if(a==="in"){$("am").textContent="";$("adlg").showModal()}
+  if(a==="out"){await sb.auth.signOut();curId=null;msg("បានចាកចេញ។")}
+});
+if(sb){
+  sb.auth.getSession().then(function(r){user=r.data.session?r.data.session.user:null;authUI()});
+  sb.auth.onAuthStateChange(function(_e,ses){user=ses?ses.user:null;authUI()});
+}
+authUI();
+$("ax").onclick=function(){$("adlg").close()};
+function amsg(t){$("am").textContent=t}
+function errKm(e){var m=(e&&e.message)||"";
+  if(/Invalid login/i.test(m))return"អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។";
+  if(/already registered/i.test(m))return"អ៊ីមែលនេះបានចុះឈ្មោះរួចហើយ។";
+  if(/at least 6/i.test(m))return"ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួ។";
+  if(/confirm/i.test(m))return"សូមបញ្ជាក់អ៊ីមែលរបស់អ្នកជាមុន។";
+  return"មានបញ្ហា៖ "+m}
+$("ain").onclick=async function(){
+  amsg("កំពុងចូល...");
+  var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
+  if(r.error)amsg(errKm(r.error));else{$("adlg").close();msg("ចូលគណនីបានជោគជ័យ។")}
+};
+$("aup").onclick=async function(){
+  amsg("កំពុងចុះឈ្មោះ...");
+  var r=await sb.auth.signUp({email:$("em").value.trim(),password:$("pw").value});
+  if(r.error)amsg(errKm(r.error));
+  else if(!r.data.session)amsg("ចុះឈ្មោះរួចហើយ! សូមពិនិត្យអ៊ីមែលដើម្បីបញ្ជាក់ រួចចូលគណនី។");
+  else{$("adlg").close();msg("ចុះឈ្មោះ និងចូលគណនីបានជោគជ័យ។")}
+};
+$("load").addEventListener("click",function(){curId=null});
+function needLogin(){if(!sb){msg("មិនទាន់កំណត់ Supabase ទេ។");return true}if(!user){msg("សូមចូលគណនីជាមុនសិន។");$("am").textContent="";$("adlg").showModal();return true}return false}
+$("sv").onclick=async function(){
+  if(needLogin())return;
+  if(!rows.length){msg("គ្មានអ្វីត្រូវរក្សាទុកទេ។");return}
+  var payload={title:(rows[0].o||"").slice(0,60)||"រឿងគ្មានចំណងជើង",lang:$("lang").value,
+    rows:rows.map(function(r){return{o:r.o,t:r.t,s:r.s==="Working"?"Pending":r.s,c:r.c,v:r.v}}),updated_at:new Date().toISOString()};
+  msg("កំពុងរក្សាទុក...");
+  var q=curId?sb.from("stories").update(payload).eq("id",curId).select("id").single():sb.from("stories").insert(payload).select("id").single();
+  var r=await q;
+  if(r.error){msg("រក្សាទុកមិនបាន៖ "+r.error.message)}else{curId=r.data.id;msg("បានរក្សាទុក។")}
+};
+async function history(){
+  var r=await sb.from("stories").select("id,title,lang,updated_at").order("updated_at",{ascending:false}).limit(50);
+  if(r.error){$("hl").textContent="មានបញ្ហា៖ "+r.error.message;return}
+  $("hl").innerHTML=r.data.length?r.data.map(function(x){
+    return'<div class="hi"><span>'+esc(x.title)+' <small>· '+esc(x.lang||"")+' · '+new Date(x.updated_at).toLocaleString()+'</small></span><button data-o="'+x.id+'">បើក</button><button data-d="'+x.id+'">លុប</button></div>'}).join(""):"មិនទាន់មានប្រវត្តិទេ។";
+}
+$("hs").onclick=function(){if(needLogin())return;$("hl").textContent="កំពុងផ្ទុក...";$("hdlg").showModal();history()};
+$("hx").onclick=function(){$("hdlg").close()};
+$("hl").addEventListener("click",async function(e){
+  var o=e.target.getAttribute("data-o"),d=e.target.getAttribute("data-d");
+  if(o){
+    var r=await sb.from("stories").select("id,lang,rows").eq("id",o).single();
+    if(r.error){msg(r.error.message);return}
+    rows=(r.data.rows||[]).map(function(x){return{o:x.o||"",t:x.t||"",s:x.s||"Pending",c:x.c!==false,v:x.v||"male"}});
+    curId=r.data.id;sel=-1;if(r.data.lang)$("lang").value=r.data.lang;
+    $("src").value=rows.map(function(x){return x.o}).join("\n");$("src").dispatchEvent(new Event("input"));
+    render();$("hdlg").close();msg("បានបើករឿងពីប្រវត្តិ។");
+  }
+  if(d&&confirm("លុបរឿងនេះពីប្រវត្តិ?")){
+    var x=await sb.from("stories").delete().eq("id",d);
+    if(x.error)msg(x.error.message);else{if(curId===d)curId=null;history()}
+  }
+});
+render();
+})();
+</script>
+</body>
+</html>
